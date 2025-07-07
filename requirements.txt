@@ -1,7 +1,7 @@
 streamlit
 numpy
 librosa
-tensorflow
-tensorflow-hub
+tensorflow_hub
+onnxruntime
+scikit_learn
 soundfile
-
