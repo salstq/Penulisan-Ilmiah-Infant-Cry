@@ -22,21 +22,30 @@ onnx_model = load_onnx_model()
 encoder = load_label_encoder()
 
 # === Fungsi Ekstraksi Fitur (MFCC) ===
-def extract_mfcc_features(file_path):
-    y, sr = librosa.load(file_path, sr=22050)  # Sampling rate standar
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
-    mfcc_scaled = np.mean(mfcc.T, axis=0)  # Ambil rata-rata setiap fitur
-    return np.expand_dims(mfcc_scaled, axis=0)  # Bentuk: (1, 40)
+def extract_mfcc_features(file):
+    wav, sr = librosa.load(file, sr=16000)
+    mfcc = librosa.feature.mfcc(y=wav, sr=sr, n_mfcc=40)
+    mfcc_mean = np.mean(mfcc, axis=1)
+    
+    # Agar jadi 1024 dimensi, kamu bisa pad/extend
+    padded = np.zeros(1024, dtype=np.float32)
+    length = min(1024, mfcc_mean.shape[0])
+    padded[:length] = mfcc_mean[:length]
+    
+    return padded.reshape(1, -1)
 
 # === Fungsi prediksi ===
 def predict_audio_class(audio_file):
     features = extract_mfcc_features(audio_file).astype(np.float32)
-    inputs = {onnx_model.get_inputs()[0].name: features}
+    inputs = {"input": features}  # sesuai nama input dari ONNX model kamu
     prediction = onnx_model.run(None, inputs)[0]
     predicted_index = np.argmax(prediction)
     predicted_label = encoder.inverse_transform([predicted_index])[0]
     confidence = np.max(prediction)
     return predicted_label, confidence
+
+
+# === Fungsi prediksi ===
 
 # === Upload audio ===
 uploaded_file = st.file_uploader("Upload file audio .wav", type=["wav"])
