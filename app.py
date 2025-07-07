@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import onnxruntime as ort
-import tensorflow_hub as hub
 import librosa
 from sklearn.preprocessing import LabelEncoder
 
@@ -9,10 +8,6 @@ from sklearn.preprocessing import LabelEncoder
 st.title("Deteksi Jenis Tangisan Bayi 👶🔊")
 
 # === Load model dan encoder ===
-@st.cache_resource
-def load_yamnet():
-    return hub.load("https://tfhub.dev/google/yamnet/1")
-
 @st.cache_resource
 def load_onnx_model():
     return ort.InferenceSession("best_model.onnx")
@@ -23,21 +18,20 @@ def load_label_encoder():
     encoder.classes_ = np.load("classes.npy", allow_pickle=True)
     return encoder
 
-yamnet_model = load_yamnet()
 onnx_model = load_onnx_model()
 encoder = load_label_encoder()
 
-# === Fungsi prediksi ===
-def extract_mean_embedding(file):
-    wav, sr = librosa.load(file, sr=16000)
-    wav_tensor = tf.convert_to_tensor(wav, dtype=tf.float32)  # tetap pakai tf di sini
-    _, embeddings, _ = yamnet_model(wav_tensor)
-    mean_embedding = tf.reduce_mean(embeddings, axis=0).numpy()
-    return np.expand_dims(mean_embedding, axis=0)
+# === Fungsi Ekstraksi Fitur (MFCC) ===
+def extract_mfcc_features(file_path):
+    y, sr = librosa.load(file_path, sr=22050)  # Sampling rate standar
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+    mfcc_scaled = np.mean(mfcc.T, axis=0)  # Ambil rata-rata setiap fitur
+    return np.expand_dims(mfcc_scaled, axis=0)  # Bentuk: (1, 40)
 
+# === Fungsi prediksi ===
 def predict_audio_class(audio_file):
-    embedding = extract_mean_embedding(audio_file).astype(np.float32)
-    inputs = {onnx_model.get_inputs()[0].name: embedding}
+    features = extract_mfcc_features(audio_file).astype(np.float32)
+    inputs = {onnx_model.get_inputs()[0].name: features}
     prediction = onnx_model.run(None, inputs)[0]
     predicted_index = np.argmax(prediction)
     predicted_label = encoder.inverse_transform([predicted_index])[0]
