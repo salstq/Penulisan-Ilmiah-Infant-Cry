@@ -8,8 +8,5 @@ protobuf==6.31.1
 scikit_learn==1.7.0
 seaborn==0.13.2
 soundfile==0.13.1
-tensorflow==2.11.1
-tensorflow_hub==0.13.0
-tensorflow_io==0.37.1
 onnxruntime==1.17.1
 streamlit
