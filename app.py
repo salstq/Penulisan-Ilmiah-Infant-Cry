@@ -3,6 +3,7 @@ import numpy as np
 import onnxruntime as ort
 import librosa
 from sklearn.preprocessing import LabelEncoder
+import io
 
 # === Judul Aplikasi ===
 st.title("👶 Deteksi Jenis Tangisan Bayi - ONNX")
@@ -10,7 +11,7 @@ st.title("👶 Deteksi Jenis Tangisan Bayi - ONNX")
 # === Load Resources ===
 @st.cache_resource
 def load_yamnet():
-    return hub.load("https://tfhub.dev/google/yamnet/1")
+    return ort.InferenceSession("yamnet.onnx")
 
 @st.cache_resource
 def load_onnx_model():
@@ -28,11 +29,20 @@ encoder = load_encoder()
 
 # === Fungsi Ekstraksi Fitur ===
 def extract_mean_embedding(file):
-    wav, sr = librosa.load(file, sr=16000)
-    wav_tensor = tf.convert_to_tensor(wav, dtype=tf.float32)
-    _, embeddings, _ = yamnet_model(wav_tensor)
-    mean_embedding = tf.reduce_mean(embeddings, axis=0).numpy().astype(np.float32)
-    return np.expand_dims(mean_embedding, axis=0)  # shape: (1, 1024)
+    # Baca file audio menjadi waveform
+    y, sr = librosa.load(io.BytesIO(file.read()), sr=16000)
+    
+    # YAMNet butuh input shape: (n_samples,) float32, sr = 16kHz
+    waveform = y.astype(np.float32)
+    waveform = np.expand_dims(waveform, axis=0)  # (1, n_samples)
+
+    input_name = yamnet_model.get_inputs()[0].name
+    outputs = yamnet_model.run(None, {input_name: waveform})
+
+    # embeddings ada di index ke-1
+    embeddings = outputs[1]  # shape (n_frames, 1024)
+    mean_embedding = np.mean(embeddings, axis=0, keepdims=True).astype(np.float32)
+    return mean_embedding  # shape: (1, 1024)
 
 # === Fungsi Prediksi ===
 def predict(file):
