@@ -36,8 +36,10 @@ def extract_mean_embedding(file):
     waveform = y.astype(np.float32)
 
     input_name = yamnet_model.get_inputs()[0].name
-    outputs = yamnet_model.run(None, {input_name: waveform})
+    print("Output names:", [o.name for o in yamnet_model.get_outputs()])
 
+    outputs = yamnet_model.run(None, {input_name: waveform})
+    print("Jumlah output:", len(outputs))
     # embeddings ada di index ke-1
     embeddings = outputs[1]  # shape (n_frames, 1024)
     mean_embedding = np.mean(embeddings, axis=0, keepdims=True).astype(np.float32)
