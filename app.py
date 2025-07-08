@@ -1,9 +1,7 @@
 import streamlit as st
 import numpy as np
-import tensorflow_hub as hub
 import onnxruntime as ort
 import librosa
-import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 
 # === Judul Aplikasi ===
