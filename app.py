@@ -34,7 +34,6 @@ def extract_mean_embedding(file):
     
     # YAMNet butuh input shape: (n_samples,) float32, sr = 16kHz
     waveform = y.astype(np.float32)
-    waveform = np.expand_dims(waveform, axis=0)  # (1, n_samples)
 
     input_name = yamnet_model.get_inputs()[0].name
     outputs = yamnet_model.run(None, {input_name: waveform})
