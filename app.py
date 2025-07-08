@@ -29,13 +29,21 @@ encoder = load_encoder()
 
 # === Fungsi Ekstraksi Fitur ===
 def extract_mean_embedding(file):
+    # Load WAV
     waveform, sr = librosa.load(file, sr=16000)
-    input_name = yamnet_model.get_inputs()[0].name
-    outputs = yamnet_model.run(None, {input_name: waveform.astype(np.float32)})
+    waveform = waveform.astype(np.float32)
+
+    # ONNX butuh bentuk (1, N)
+    waveform = np.expand_dims(waveform, axis=0)
+
+    # Jalankan ONNX inference
+    outputs = yamnet_session.run(None, {'waveform': waveform})
+
+    embeddings = outputs[1]  # index 1 = embeddings
+    mean_embedding = np.mean(embeddings, axis=0, keepdims=True)  # shape: (1, 1024)
     
-    embeddings = outputs[0]  # (n_frames, 1024)
-    mean_embedding = np.mean(embeddings, axis=0, keepdims=True).astype(np.float32)  # (1, 1024)
     return mean_embedding
+
 
 # === Fungsi Prediksi ===
 def predict(file):
