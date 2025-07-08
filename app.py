@@ -29,21 +29,24 @@ encoder = load_encoder()
 
 # === Fungsi Ekstraksi Fitur ===
 def extract_mean_embedding(file):
-    # Baca file audio menjadi waveform
+    # Load audio dari file uploader
     y, sr = librosa.load(io.BytesIO(file.read()), sr=16000)
-    
-    # YAMNet butuh input shape: (n_samples,) float32, sr = 16kHz
     waveform = y.astype(np.float32)
 
     input_name = yamnet_model.get_inputs()[0].name
+    print("Output count:", len(yamnet_model.get_outputs()))
     print("Output names:", [o.name for o in yamnet_model.get_outputs()])
 
+    # Jalankan model ONNX
     outputs = yamnet_model.run(None, {input_name: waveform})
-    print("Jumlah output:", len(outputs))
-    # embeddings ada di index ke-1
-    embeddings = outputs[1]  # shape (n_frames, 1024)
+
+    # Gunakan output pertama (karena hanya ada 1 output dari model kamu)
+    embeddings = outputs[0]  # biasanya bentuk (n_frames, 1024)
+
+    # Rata-ratakan ke seluruh frame (jadi 1 vektor)
     mean_embedding = np.mean(embeddings, axis=0, keepdims=True).astype(np.float32)
-    return mean_embedding  # shape: (1, 1024)
+
+    return mean_embedding  # bentuk akhir (1, 1024)
 
 # === Fungsi Prediksi ===
 def predict(file):
