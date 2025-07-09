@@ -10,7 +10,7 @@ def load_models():
     yamnet = tflite.Interpreter(model_path="yamnet.tflite")
     yamnet.allocate_tensors()
 
-    classifier = tflite.Interpreter(model_path="model_cry.tflite")
+    classifier = tflite.Interpreter(model_path="best_model.tflite")
     classifier.allocate_tensors()
 
     return yamnet, classifier
