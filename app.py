@@ -26,6 +26,7 @@ classifier_output = classifier.get_output_details()[0]
 
 # Label mapping (ubah kalau perlu)
 label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
+label_display = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired', 'Other']
 
 # UI
 st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Bayi 👶🔊</h1>", unsafe_allow_html=True)
