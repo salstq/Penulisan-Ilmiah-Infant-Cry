@@ -59,8 +59,9 @@ if uploaded:
 
     pred_label = label_map[np.argmax(preds)]
     confidence = np.max(preds)
-
-    import matplotlib.pyplot as plt
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    output = interpreter.get_tensor(output_details[0]['index'])
 
     # Visualisasi probabilitas
     labels = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
