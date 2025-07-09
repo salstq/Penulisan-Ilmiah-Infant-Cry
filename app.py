@@ -1,65 +1,51 @@
 import streamlit as st
 import numpy as np
-import onnxruntime as ort
+import tensorflow as tf
 import librosa
-from sklearn.preprocessing import LabelEncoder
-import io
+from scipy.io import wavfile
 
 # === Judul Aplikasi ===
-st.title("👶 Deteksi Jenis Tangisan Bayi - ONNX")
+st.title("👶 Deteksi Jenis Tangisan Bayi - TFLite")
 
-# === Load Resources ===
+# === Load model TFLite ===
 @st.cache_resource
-def load_yamnet():
-    return ort.InferenceSession("yamnet.onnx")
+def load_model():
+    interpreter = tf.lite.Interpreter(model_path="best_model.tflite")
+    interpreter.allocate_tensors()
+    return interpreter
 
-@st.cache_resource
-def load_onnx_model():
-    return ort.InferenceSession("best_model.onnx")
+interpreter = load_model()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-@st.cache_resource
-def load_encoder():
-    encoder = LabelEncoder()
-    encoder.classes_ = np.load("classes.npy", allow_pickle=True)
-    return encoder
-
-yamnet_model = load_yamnet()
-onnx_model = load_onnx_model()
-encoder = load_encoder()
-
-# === Fungsi Ekstraksi Fitur ===
-def extract_mean_embedding(file):
-    # Load WAV
-    waveform, sr = librosa.load(file, sr=16000)
-    waveform = waveform.astype(np.float32)
-
-    # ONNX butuh bentuk (1, N)
-    waveform = np.expand_dims(waveform, axis=0)
-
-    # Jalankan ONNX inference
-    outputs = yamnet_session.run(None, {'waveform': waveform})
-
-    embeddings = outputs[1]  # index 1 = embeddings
-    mean_embedding = np.mean(embeddings, axis=0, keepdims=True)  # shape: (1, 1024)
-    
-    return mean_embedding
-
+# === Label kelas ===
+labels = ['belly pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
 
 # === Fungsi Prediksi ===
 def predict(file):
-    embedding = extract_mean_embedding(file)
-    input_name = onnx_model.get_inputs()[0].name
-    output = onnx_model.run(None, {input_name: embedding})[0]
-    pred_index = np.argmax(output)
-    pred_label = encoder.inverse_transform([pred_index])[0]
-    confidence = np.max(output)
-    return pred_label, confidence
+    y, sr = librosa.load(file, sr=22050, mono=True)
+    
+    # Ekstraksi fitur MFCC → kemudian dirata-rata
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+    mfcc_mean = np.mean(mfcc.T, axis=0)  # shape (40,)
+    
+    # Siapkan input model (shape: (1, 1024))
+    input_data = np.zeros((1, 1024), dtype=np.float32)
+    input_data[0, :len(mfcc_mean)] = mfcc_mean
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+
+    pred_index = np.argmax(output_data)
+    confidence = output_data[0][pred_index]
+    return labels[pred_index], confidence
 
 # === Upload file audio ===
-uploaded_file = st.file_uploader("Upload file audio (.wav)", type=["wav"])
+uploaded_file = st.file_uploader("Upload file audio (.wav / .mp3)", type=["wav", "mp3"])
 
 if uploaded_file is not None:
-    st.audio(uploaded_file, format="audio/wav")
+    st.audio(uploaded_file)
     with st.spinner("Menganalisis audio..."):
         label, confidence = predict(uploaded_file)
         st.success(f"🎯 Prediksi: **{label}**")
