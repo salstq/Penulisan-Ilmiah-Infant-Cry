@@ -63,7 +63,7 @@ if uploaded:
     pred_display = label_display[pred_index]
     confidence = np.max(preds)
 
-    st.markdown(f"### Prediksi: `{pred_label}`")
+    st.markdown(f"### Prediksi: `{pred_display}`")
     st.markdown(f"**Confidence**: `{confidence:.4f}`")
 
     # Saran berdasarkan label
