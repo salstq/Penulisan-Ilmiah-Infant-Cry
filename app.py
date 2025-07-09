@@ -28,7 +28,7 @@ classifier_output = classifier.get_output_details()[0]
 label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
 
 # UI
-st.title("Infant Cry Classifier")
+st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Bayi 👶🔊</h1>", unsafe_allow_html=True)
 uploaded = st.file_uploader("Upload audio file (.wav)", type=["wav"])
 
 if uploaded:
@@ -59,6 +59,18 @@ if uploaded:
 
     pred_label = label_map[np.argmax(preds)]
     confidence = np.max(preds)
+
+    import matplotlib.pyplot as plt
+
+    # Visualisasi probabilitas
+    labels = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
+    fig, ax = plt.subplots()
+    ax.barh(labels, prediction[0])
+    ax.set_xlabel('Confidence')
+    ax.set_title('Model Prediction')
+    
+    st.pyplot(fig)
+
 
     st.markdown(f"### Prediksi: `{pred_label}`")
     st.markdown(f"**Confidence**: `{confidence:.4f}`")
