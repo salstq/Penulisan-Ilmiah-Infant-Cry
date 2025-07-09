@@ -3,7 +3,7 @@ import numpy as np
 import soundfile as sf
 import librosa
 import tflite_runtime.interpreter as tflite
-import matplotlib.pyplot as plt
+
 # Load models
 @st.cache_resource
 def load_models():
@@ -66,11 +66,16 @@ if uploaded:
     st.markdown(f"### Prediksi: `{pred_label}`")
     st.markdown(f"**Confidence**: `{confidence:.4f}`")
 
-    # Visualisasi probabilitas
-    st.markdown("### 📊 Confidence per Kategori:")
-    fig, ax = plt.subplots()
-    ax.barh(label_display, preds[0], color="#FFA07A")
-    ax.set_xlim([0, 1])
-    ax.set_xlabel('Confidence')
-    ax.invert_yaxis()
-    st.pyplot(fig)
+    # Saran berdasarkan label
+    tips_dict = {
+        "belly_pain": "Pijat perlahan perut bayi searah jarum jam. Jika berlanjut, konsultasikan ke dokter.",
+        "burping": "Gendong bayi dan bantu sendawa dengan menepuk lembut punggungnya.",
+        "discomfort": "Periksa popok, pakaian, atau suhu ruangan. Pastikan semua nyaman untuk bayi.",
+        "hungry": "Coba susui bayi, baik ASI maupun susu formula.",
+        "tired": "Buat suasana tenang dan redup. Gendong atau ayun pelan-pelan.",
+        "other": "Amati perilaku bayi lebih lanjut atau konsultasikan ke tenaga medis."
+    }
+    
+    saran = tips_dict.get(pred_label, "Tidak ada saran.")
+    st.markdown("### 💡 Saran:")
+    st.info(saran)
