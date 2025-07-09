@@ -57,21 +57,19 @@ if uploaded:
     classifier.invoke()
     preds = classifier.get_tensor(classifier_output['index'])  # [1, 6]
 
-    pred_label = label_map[np.argmax(preds)]
+    pred_index = np.argmax(preds)
+    pred_label = label_map[pred_index]
+    pred_display = label_display[pred_index]
     confidence = np.max(preds)
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-    interpreter.invoke()
-    output = interpreter.get_tensor(output_details[0]['index'])
-
-    # Visualisasi probabilitas
-    labels = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
-    fig, ax = plt.subplots()
-    ax.barh(labels, prediction[0])
-    ax.set_xlabel('Confidence')
-    ax.set_title('Model Prediction')
-    
-    st.pyplot(fig)
-
 
     st.markdown(f"### Prediksi: `{pred_label}`")
     st.markdown(f"**Confidence**: `{confidence:.4f}`")
+
+    # Visualisasi probabilitas
+    st.markdown("### 📊 Confidence per Kategori:")
+    fig, ax = plt.subplots()
+    ax.barh(label_display, preds[0], color="#FFA07A")
+    ax.set_xlim([0, 1])
+    ax.set_xlabel('Confidence')
+    ax.invert_yaxis()
+    st.pyplot(fig)
