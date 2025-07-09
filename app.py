@@ -3,7 +3,7 @@ import numpy as np
 import soundfile as sf
 import librosa
 import tflite_runtime.interpreter as tflite
-
+import matplotlib.pyplot as plt
 # Load models
 @st.cache_resource
 def load_models():
