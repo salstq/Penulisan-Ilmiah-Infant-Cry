@@ -1,44 +1,64 @@
-import tflite_runtime.interpreter as tflite
-import numpy as np
-import librosa
 import streamlit as st
-from scipy.io import wavfile
+import numpy as np
+import soundfile as sf
+import librosa
+import tflite_runtime.interpreter as tflite
 
-st.title("👶 Deteksi Tangisan Bayi (TFLite - Tanpa TensorFlow)")
-
+# Load models
 @st.cache_resource
-def load_model():
-    interpreter = tflite.Interpreter(model_path="best_model.tflite")
-    interpreter.allocate_tensors()
-    return interpreter
+def load_models():
+    yamnet = tflite.Interpreter(model_path="yamnet.tflite")
+    yamnet.allocate_tensors()
 
-interpreter = load_model()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+    classifier = tflite.Interpreter(model_path="model_cry.tflite")
+    classifier.allocate_tensors()
 
-labels = ['belly pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
+    return yamnet, classifier
 
-def predict(file):
-    y, sr = librosa.load(file, sr=22050, mono=True)
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
-    mfcc_mean = np.mean(mfcc.T, axis=0)
+yamnet, classifier = load_models()
 
-    input_data = np.zeros((1, 1024), dtype=np.float32)
-    input_data[0, :len(mfcc_mean)] = mfcc_mean
+# Get I/O details
+yamnet_input = yamnet.get_input_details()[0]
+yamnet_output = yamnet.get_output_details()[1]  # embeddings
 
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-    interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
+classifier_input = classifier.get_input_details()[0]
+classifier_output = classifier.get_output_details()[0]
 
-    pred_index = np.argmax(output_data)
-    confidence = output_data[0][pred_index]
-    return labels[pred_index], confidence
+# Label mapping (ubah kalau perlu)
+label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
 
-uploaded_file = st.file_uploader("Upload file audio (.wav / .mp3)", type=["wav", "mp3"])
+# UI
+st.title("Infant Cry Classifier")
+uploaded = st.file_uploader("Upload audio file (.wav)", type=["wav"])
 
-if uploaded_file is not None:
-    st.audio(uploaded_file)
-    with st.spinner("Menganalisis audio..."):
-        label, confidence = predict(uploaded_file)
-        st.success(f"🎯 Prediksi: **{label}**")
-        st.info(f"📊 Keyakinan Model: {confidence:.2%}")
+if uploaded:
+    st.audio(uploaded)
+
+    # Load and resample audio
+    y, sr = sf.read(uploaded)
+    if y.ndim > 1:
+        y = y[:, 0]  # ambil channel pertama (mono)
+    if sr != 16000:
+        y = librosa.resample(y, orig_sr=sr, target_sr=16000)
+
+    y = y.astype(np.float32)
+
+    # Run YAMNet TFLite
+    yamnet.resize_tensor_input(yamnet_input['index'], [len(y)])
+    yamnet.allocate_tensors()
+    yamnet.set_tensor(yamnet_input['index'], y)
+    yamnet.invoke()
+    embeddings = yamnet.get_tensor(yamnet_output['index'])  # [N, 1024]
+
+    mean_embedding = np.mean(embeddings, axis=0).astype(np.float32).reshape(1, -1)
+
+    # Run classifier model
+    classifier.set_tensor(classifier_input['index'], mean_embedding)
+    classifier.invoke()
+    preds = classifier.get_tensor(classifier_output['index'])  # [1, 6]
+
+    pred_label = label_map[np.argmax(preds)]
+    confidence = np.max(preds)
+
+    st.markdown(f"### Prediksi: `{pred_label}`")
+    st.markdown(f"**Confidence**: `{confidence:.4f}`")
