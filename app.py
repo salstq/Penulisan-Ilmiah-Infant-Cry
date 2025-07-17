@@ -88,7 +88,8 @@ if uploaded:
 
     # Threshold untuk klasifikasi tidak dikenali
     threshold = 0.6
-
+    threshold = 0.7 if file_ext == "mp3" else 0.6
+    
     if confidence < threshold:
         pred_display = "Tidak Dikenali"
         pred_label = "other"
