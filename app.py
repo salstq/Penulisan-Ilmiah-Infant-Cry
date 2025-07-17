@@ -5,6 +5,7 @@ import librosa
 import io
 import tflite_runtime.interpreter as tflite
 from pydub import AudioSegment
+import ffmpeg
 
 # Load models
 @st.cache_resource
@@ -42,14 +43,20 @@ if uploaded:
     if file_ext == "wav":
         y, sr = sf.read(uploaded)
     elif file_ext == "mp3":
-        # Convert mp3 to wav using pydub + ffmpeg
+       # Simpan mp3 yang diupload ke file sementara
+        temp_input_path = "temp_input.mp3"
+        temp_output_path = "temp_output.wav"
+        
+        with open(temp_input_path, "wb") as f:
+            f.write(uploaded.read())
+    
         try:
-            audio_data = uploaded.read()
-            audio = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
-            audio = audio.set_channels(1).set_frame_rate(16000)
-            samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            y = samples / np.iinfo(samples.dtype).max
-            sr = 16000
+            # Konversi mp3 ke wav
+            ffmpeg.input(temp_input_path).output(temp_output_path, ac=1, ar=16000).run(quiet=True, overwrite_output=True)
+            
+            # Baca file WAV hasil konversi
+            y, sr = sf.read(temp_output_path)
+        
         except Exception as e:
             st.error("Gagal memproses file MP3. Pastikan ffmpeg sudah tersedia.")
             st.stop()
