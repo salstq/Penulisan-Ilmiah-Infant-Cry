@@ -44,7 +44,7 @@ tips_dict = {
     "discomfort": "Periksa popok, pakaian, atau suhu ruangan. Pastikan semua nyaman untuk bayi.",
     "hungry": "Coba susui bayi dengan ASI atau susu formula. Jika bayi sudah berusia 6 bulan ke atas, berikan juga MPASI sesuai usianya.",
     "tired": "Buat suasana tenang dan redup. Gendong atau ayun pelan-pelan.",
-    "other": "Amati perilaku bayi lebih lanjut atau konsultasikan ke tenaga medis."
+    "other": "Suara tidak dikenali. Amati perilaku bayi lebih lanjut atau konsultasikan ke tenaga medis."
 }
 
 # Tampilan judul
@@ -52,6 +52,8 @@ st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Ba
 
 # Upload file
 uploaded = st.file_uploader("🎵 Upload audio file (.wav atau .mp3)", type=["wav", "mp3"])
+st.caption("🔁 Disarankan mengunggah file `.wav` agar akurasi lebih optimal.")
+
 
 if uploaded:
     st.audio(uploaded)
