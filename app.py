@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import soundfile as sf
 import librosa
+import io
 import tflite_runtime.interpreter as tflite
 
 # Load models
@@ -30,18 +31,27 @@ label_display = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
 
 # UI
 st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Bayi 👶🔊</h1>", unsafe_allow_html=True)
-uploaded = st.file_uploader("Upload audio file (.wav)", type=["wav"])
+uploaded = st.file_uploader("Upload audio file (.wav atau .mp3)", type=["wav", "mp3"])
 
 if uploaded:
     st.audio(uploaded)
 
-    # Load and resample audio
-    y, sr = sf.read(uploaded)
+    file_ext = uploaded.name.split('.')[-1].lower()
+
+    if file_ext == "wav":
+        y, sr = sf.read(uploaded)
+    elif file_ext == "mp3":
+        # Convert mp3 to waveform
+        audio_data = uploaded.read()
+        y, sr = librosa.load(io.BytesIO(audio_data), sr=None)
+    else:
+        st.error("Format tidak didukung.")
+        st.stop()
+
     if y.ndim > 1:
         y = y[:, 0]  # Ambil channel pertama (mono)
     if sr != 16000:
         y = librosa.resample(y, orig_sr=sr, target_sr=16000)
-
     y = y.astype(np.float32)
 
     # Run YAMNet
@@ -60,7 +70,7 @@ if uploaded:
     pred_index = np.argmax(preds)
     confidence = np.max(preds)
 
-    # Threshold untuk menentukan suara tidak dikenali
+    # Threshold untuk klasifikasi tidak dikenali
     threshold = 0.6
 
     if confidence < threshold:
