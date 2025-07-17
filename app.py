@@ -29,7 +29,7 @@ classifier_output = classifier.get_output_details()[0]
 
 # Label mapping
 label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired']
-label_display = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
+label_display = ['Sakit Perut', 'Perlu Sendawa', 'Tidak Nyaman', 'Lapar/Haus', 'Mengantuk']
 
 # UI
 st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Bayi 👶🔊</h1>", unsafe_allow_html=True)
@@ -105,7 +105,7 @@ if uploaded:
         "belly_pain": "Pijat perlahan perut bayi searah jarum jam. Jika berlanjut, konsultasikan ke dokter.",
         "burping": "Gendong bayi dan bantu sendawa dengan menepuk lembut punggungnya.",
         "discomfort": "Periksa popok, pakaian, atau suhu ruangan. Pastikan semua nyaman untuk bayi.",
-        "hungry": "Coba susui bayi, baik ASI maupun susu formula.",
+        "hungry": "Coba susui bayi dengan ASI atau susu formula. Jika bayi sudah berusia 6 bulan ke atas, berikan juga MPASI sesuai usianya.",
         "tired": "Buat suasana tenang dan redup. Gendong atau ayun pelan-pelan.",
         "other": "Amati perilaku bayi lebih lanjut atau konsultasikan ke tenaga medis."
     }
