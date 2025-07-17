@@ -24,9 +24,9 @@ yamnet_output = yamnet.get_output_details()[1]  # embeddings
 classifier_input = classifier.get_input_details()[0]
 classifier_output = classifier.get_output_details()[0]
 
-# Label mapping (ubah kalau perlu)
-label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired', 'other']
-label_display = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired', 'Other']
+# Label mapping
+label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired']
+label_display = ['Belly Pain', 'Burping', 'Discomfort', 'Hungry', 'Tired']
 
 # UI
 st.markdown("<h1 style='text-align: center; color: #FF6F61;'>Deteksi Tangisan Bayi 👶🔊</h1>", unsafe_allow_html=True)
@@ -38,33 +38,41 @@ if uploaded:
     # Load and resample audio
     y, sr = sf.read(uploaded)
     if y.ndim > 1:
-        y = y[:, 0]  # ambil channel pertama (mono)
+        y = y[:, 0]  # Ambil channel pertama (mono)
     if sr != 16000:
         y = librosa.resample(y, orig_sr=sr, target_sr=16000)
 
     y = y.astype(np.float32)
 
-    # Run YAMNet TFLite
+    # Run YAMNet
     yamnet.resize_tensor_input(yamnet_input['index'], [len(y)])
     yamnet.allocate_tensors()
     yamnet.set_tensor(yamnet_input['index'], y)
     yamnet.invoke()
     embeddings = yamnet.get_tensor(yamnet_output['index'])  # [N, 1024]
-
     mean_embedding = np.mean(embeddings, axis=0).astype(np.float32).reshape(1, -1)
 
-    # Run classifier model
+    # Run classifier
     classifier.set_tensor(classifier_input['index'], mean_embedding)
     classifier.invoke()
-    preds = classifier.get_tensor(classifier_output['index'])  # [1, 6]
+    preds = classifier.get_tensor(classifier_output['index'])  # [1, 5]
 
     pred_index = np.argmax(preds)
-    pred_label = label_map[pred_index]
-    pred_display = label_display[pred_index]
     confidence = np.max(preds)
 
+    # Threshold untuk menentukan suara tidak dikenali
+    threshold = 0.6
+
+    if confidence < threshold:
+        pred_display = "Tidak Dikenali"
+        pred_label = "other"
+    else:
+        pred_label = label_map[pred_index]
+        pred_display = label_display[pred_index]
+
+    # Tampilkan hasil
     st.markdown(f"### Prediksi: `{pred_display}`")
-    st.markdown(f"**Confidence**: `{confidence:.4f}`")
+    st.markdown(f"**Confidence**: `{confidence * 100:.2f}%`")
 
     # Saran berdasarkan label
     tips_dict = {
@@ -75,7 +83,7 @@ if uploaded:
         "tired": "Buat suasana tenang dan redup. Gendong atau ayun pelan-pelan.",
         "other": "Amati perilaku bayi lebih lanjut atau konsultasikan ke tenaga medis."
     }
-    
+
     saran = tips_dict.get(pred_label, "Tidak ada saran.")
     st.markdown("### 💡 Saran:")
     st.info(saran)
