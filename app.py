@@ -46,15 +46,16 @@ if uploaded:
         audio_data = uploaded.read()
         audio = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
         audio = audio.set_channels(1).set_frame_rate(16000)
-        samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-        y = samples / np.iinfo(samples.dtype).max  # normalisasi ke [-1.0, 1.0]
+        samples = np.array(audio.get_array_of_samples())
+        y = samples.astype(np.float32) / np.iinfo(samples.dtype).max
         sr = 16000
     else:
         st.error("Format tidak didukung.")
         st.stop()
 
+    # Convert stereo to mono if needed
     if y.ndim > 1:
-        y = y[:, 0]  # Ambil channel pertama (mono)
+        y = y[:, 0]
     if sr != 16000:
         y = librosa.resample(y, orig_sr=sr, target_sr=16000)
     y = y.astype(np.float32)
@@ -71,7 +72,6 @@ if uploaded:
     classifier.set_tensor(classifier_input['index'], mean_embedding)
     classifier.invoke()
     preds = classifier.get_tensor(classifier_output['index'])  # [1, 5]
-
     pred_index = np.argmax(preds)
     confidence = np.max(preds)
 
@@ -85,9 +85,9 @@ if uploaded:
         pred_label = label_map[pred_index]
         pred_display = label_display[pred_index]
 
-    # Tampilkan hasil
+    # Tampilkan hasil prediksi
     st.markdown(f"### Prediksi: `{pred_display}`")
-    st.markdown(f"**Confidence**: `{confidence * 100:.2f}%`")
+    st.markdown(f"**Confidence**: `{int(confidence * 100)}%`")  # tanpa koma/desimal
 
     # Saran berdasarkan label
     tips_dict = {
