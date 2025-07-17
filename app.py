@@ -43,12 +43,16 @@ if uploaded:
         y, sr = sf.read(uploaded)
     elif file_ext == "mp3":
         # Convert mp3 to wav using pydub + ffmpeg
-        audio_data = uploaded.read()
-        audio = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
-        audio = audio.set_channels(1).set_frame_rate(16000)
-        samples = np.array(audio.get_array_of_samples())
-        y = samples.astype(np.float32) / np.iinfo(samples.dtype).max
-        sr = 16000
+        try:
+            audio_data = uploaded.read()
+            audio = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
+            audio = audio.set_channels(1).set_frame_rate(16000)
+            samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+            y = samples / np.iinfo(samples.dtype).max
+            sr = 16000
+        except Exception as e:
+            st.error("Gagal memproses file MP3. Pastikan ffmpeg sudah tersedia.")
+            st.stop()
     else:
         st.error("Format tidak didukung.")
         st.stop()
