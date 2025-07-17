@@ -4,6 +4,7 @@ import soundfile as sf
 import librosa
 import io
 import tflite_runtime.interpreter as tflite
+from pydub import AudioSegment
 
 # Load models
 @st.cache_resource
@@ -41,9 +42,13 @@ if uploaded:
     if file_ext == "wav":
         y, sr = sf.read(uploaded)
     elif file_ext == "mp3":
-        # Convert mp3 to waveform
+        # Convert mp3 to wav using pydub + ffmpeg
         audio_data = uploaded.read()
-        y, sr = librosa.load(io.BytesIO(audio_data), sr=None)
+        audio = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
+        audio = audio.set_channels(1).set_frame_rate(16000)
+        samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+        y = samples / np.iinfo(samples.dtype).max  # normalisasi ke [-1.0, 1.0]
+        sr = 16000
     else:
         st.error("Format tidak didukung.")
         st.stop()
