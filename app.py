@@ -97,8 +97,8 @@ if uploaded:
         pred_display = label_display[pred_index]
 
     # Tampilkan hasil prediksi
-    st.markdown(f"### Prediksi: `{pred_display}`")
-    st.markdown(f"**Confidence**: `{int(confidence * 100)}%`")  # tanpa koma/desimal
+    st.markdown(f"### Prediksi: {pred_display}")
+    st.markdown(f"###**Akurasi**: {int(confidence * 100)}%")  # tanpa koma/desimal
 
     # Saran berdasarkan label
     tips_dict = {
