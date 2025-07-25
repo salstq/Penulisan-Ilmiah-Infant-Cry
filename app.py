@@ -37,7 +37,7 @@ classifier_output = classifier.get_output_details()[0]
 
 # Mapping label
 label_map = ['belly_pain', 'burping', 'discomfort', 'hungry', 'tired']
-label_display = ['Sakit Perut 🤕', 'Perlu Sendawa 💨', 'Tidak Nyaman 😣', 'Lapar/Haus 🍼', 'Tertidur 😴']
+label_display = ['Sakit Perut 🤕', 'Perlu Sendawa 💨', 'Tidak Nyaman 😣', 'Lapar/Haus 🍼', 'Lelah 😴']
 tips_dict = {
     "belly_pain": "Pijat perlahan perut bayi searah jarum jam. Jika berlanjut, konsultasikan ke dokter.",
     "burping": "Gendong bayi dan bantu sendawa dengan menepuk lembut punggungnya.",
